@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="id">
 <head>
 <meta charset="UTF-8">
@@ -9,7 +9,6 @@
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Poppins}
-
 body{background:#eef2f7}
 
 /* TOPBAR */
@@ -19,7 +18,6 @@ background:linear-gradient(135deg,#2563eb,#3b82f6);
 color:white;display:flex;align-items:center;padding:0 25px;
 z-index:1000;box-shadow:0 10px 30px rgba(0,0,0,.25);
 }
-
 .menu-btn{font-size:22px;cursor:pointer;margin-right:15px}
 
 /* SIDEBAR */
@@ -29,7 +27,6 @@ background:linear-gradient(135deg,#2563eb,#3b82f6);
 padding-top:20px;transition:.3s;z-index:1000;
 }
 .sidebar.show{left:0}
-
 .sidebar a{display:flex;gap:12px;padding:18px 25px;color:#cbd5e1;text-decoration:none}
 .sidebar a:hover{background:rgba(255,255,255,.1);color:white}
 
@@ -48,7 +45,32 @@ box-shadow:0 15px 35px rgba(0,0,0,.08);
 margin-bottom:20px;overflow:hidden;
 }
 
-h3{margin-bottom:10px}
+/* RUNNING TEXT */
+.runningBox{
+background:#f8fafc;
+padding:12px;
+border-radius:12px;
+margin-bottom:15px;
+overflow:hidden;
+}
+#runningText{
+white-space:nowrap;
+display:inline-block;
+padding-left:100%;
+animation:runText 12s linear infinite;
+font-weight:600;
+}
+@keyframes runText{
+from{transform:translateX(0)}
+to{transform:translateX(-120%)}
+}
+
+.alertMerah{
+color:#dc2626;
+font-weight:700;
+margin-top:8px;
+display:none;
+}
 
 /* INPUT */
 input{
@@ -60,31 +82,14 @@ border-radius:10px;border:1px solid #e2e8f0;
 button{
 width:100%;padding:14px;border:none;border-radius:12px;
 background:#2563eb;color:white;font-weight:600;cursor:pointer;
-transition:.2s;
-}
-button:hover{background:#1d4ed8}
-
-button.loading{
-background:#94a3b8;
-cursor:not-allowed;
 }
 
-/* ===== FIX RIWAYAT MOBILE ===== */
-.riwayat-wrap{
-width:100%;
-overflow-x:auto;
-}
-
-table{
-width:100%;
-min-width:450px;
-border-collapse:collapse;
-}
+/* RIWAYAT MOBILE FIX */
+.riwayat-wrap{overflow-x:auto}
+table{width:100%;min-width:450px;border-collapse:collapse}
 th,td{padding:10px;border-bottom:2px solid #e2e8f0}
 th{background:#f8fafc;text-align:left;position:sticky;top:0}
-
 .hidden{display:none}
-
 .loading{color:#94a3b8;font-style:italic}
 </style>
 </head>
@@ -108,10 +113,20 @@ th{background:#f8fafc;text-align:left;position:sticky;top:0}
 
 <!-- SALDO -->
 <div class="card">
+
+<div id="runningSuami" class="runningBox hidden">
+<div id="runningText">Loading...</div>
+</div>
+
 <h3>Saldo Bekal</h3>
 <p>Saldo: <b id="saldo" class="loading">Loading...</b></p>
 <p>Total Masuk: <b id="masuk" class="loading">Loading...</b></p>
 <p>Total Keluar: <b id="keluar" class="loading">Loading...</b></p>
+
+<div id="alertTipis" class="alertMerah">
+⚠️ Bekal harian sudah di bawah 50rb!
+</div>
+
 </div>
 
 <!-- FORM ISTRI -->
@@ -133,13 +148,11 @@ th{background:#f8fafc;text-align:left;position:sticky;top:0}
 <!-- RIWAYAT -->
 <div class="card">
 <h3>Riwayat Bekal</h3>
-
 <div class="riwayat-wrap">
 <table id="tbl">
 <tr><th>Tanggal</th><th>Jenis</th><th>Nominal</th><th>Keterangan</th></tr>
 </table>
 </div>
-
 </div>
 
 </div>
@@ -153,19 +166,17 @@ sidebar.classList.toggle("show");
 overlay.classList.toggle("show");
 }
 
-const user=localStorage.getItem("user");
 const role=localStorage.getItem("role");
-if(!user) location="index.html";
-
-/* ROLE */
 if(role==="admin") formIstri.classList.remove("hidden");
-else formSuami.classList.remove("hidden");
+else{
+formSuami.classList.remove("hidden");
+runningSuami.classList.remove("hidden");
+}
 
 /* LOAD DATA */
 load();
 
 function load(){
-
 fetch(`${url}?action=getSaldoBekal`)
 .then(r=>r.json())
 .then(d=>{
@@ -176,32 +187,34 @@ keluar.classList.remove("loading");
 saldo.innerText="Rp "+d.saldo.toLocaleString();
 masuk.innerText="Rp "+d.totalBekal.toLocaleString();
 keluar.innerText="Rp "+d.totalKeluar.toLocaleString();
-});
 
-fetch(`${url}?action=getRiwayatBekal`)
-.then(r=>r.json())
-.then(rows=>{
-rows.reverse().forEach(r=>{
-const jenis = r[1]=="MASUK" ? "💰 Bekal" : "💸 Pengeluaran";
+if(role!=="admin"){
+updateRunning(d.saldo);
+}
+});
+}
 
-tbl.innerHTML+=`
-<tr>
-<td>${new Date(r[0]).toLocaleDateString()}</td>
-<td>${jenis}</td>
-<td>Rp ${Number(r[2]).toLocaleString()}</td>
-<td>${r[3]}</td>
-</tr>`;
-});
-});
+/* ===== LOGIKA RUNNING ===== */
+function updateRunning(saldo){
+
+const today = new Date();
+const hari = today.getDay(); // 0 = minggu
+const sisaHari = 7 - hari;
+
+const perHari = Math.floor(saldo / sisaHari);
+
+runningText.innerText =
+`Sisa ${sisaHari} hari minggu ini • Bekal tersisa Rp ${saldo.toLocaleString()} • Aman dipakai Rp ${perHari.toLocaleString()} / hari`;
+
+if(perHari < 50000){
+alertTipis.style.display="block";
+}else{
+alertTipis.style.display="none";
+}
 }
 
 /* SUAMI INPUT */
 function simpan(){
-const btn=document.getElementById("btnKeluar");
-btn.classList.add("loading");
-btn.innerText="Menyimpan...";
-btn.disabled=true;
-
 fetch(url,{
 method:"POST",
 body:JSON.stringify({
@@ -214,11 +227,6 @@ keterangan:ket.value
 
 /* ISTRI TRANSFER */
 function tambahBekal(){
-const btn=document.getElementById("btnBekal");
-btn.classList.add("loading");
-btn.innerText="Mengirim...";
-btn.disabled=true;
-
 fetch(url,{
 method:"POST",
 body:JSON.stringify({

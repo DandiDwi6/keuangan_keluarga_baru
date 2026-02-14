@@ -228,18 +228,48 @@ animate(saldoBekalEl,_saldoBekal);
 eyeBtn.innerText="👓";
 }
 }
-eyeBtn.onclick=()=>{hideSaldo=!hideSaldo;renderSaldo();}
+eyeBtn.onclick=()=>{
+hideSaldo=!hideSaldo;
+renderSaldo();
+updateRunningText(); // <- ini penting
+}
+
 
 /* RUNNING TEXT */
 const tanggalGajian=25;
 function updateRunningText(){
 const todayDate=new Date();
 let next=new Date(todayDate.getFullYear(),todayDate.getMonth(),tanggalGajian);
-if(todayDate.getDate()>tanggalGajian)next.setMonth(next.getMonth()+1);
+
+if(todayDate.getDate()>tanggalGajian) next.setMonth(next.getMonth()+1);
+
 const sisaHari=Math.ceil((next-todayDate)/(1000*60*60*24));
 const batas=Math.floor(_saldoTotal/sisaHari);
+
+/* RESET STYLE */
+runningText.classList.remove("blink");
+runningText.style.color="#1e293b";
+
+/* ====== JIKA SALDO MASIH DIHIDE ====== */
+if(hideSaldo){
+
+runningText.innerText=`📢 Sisa ${sisaHari} hari menuju gajian • Saldo Rp **** • Aman dipakai Rp **** / hari`;
+return;
+
+}
+
+/* ====== JIKA SUDAH DIBUKA ====== */
+
+if(batas < 100000){
+runningText.innerText=`⚠️ WARNING! Sisa ${sisaHari} hari menuju gajian • Jatah hanya ${rp(batas)} / hari • Kurangi pengeluaran!`;
+runningText.style.color="#dc2626";
+runningText.classList.add("blink");
+}else{
 runningText.innerText=`📢 Sisa ${sisaHari} hari menuju gajian • Saldo ${rp(_saldoTotal)} • Aman dipakai ${rp(batas)} / hari`;
 }
+
+}
+
 
 /* LOAD DATA */
 fetch(url,{method:"POST",body:JSON.stringify({action:"getData",sheet:"TRANSACTIONS"})})
