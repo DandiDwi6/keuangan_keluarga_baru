@@ -10,133 +10,87 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Poppins}
 
-/* BODY */
-body{
-  background:#eef2f7;
-}
+body{background:#eef2f7}
 
 /* TOPBAR */
 .topbar{
-position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:70px;
-  background:linear-gradient(135deg,#2563eb,#3b82f6);
-  color:white;
-  display:flex;
-  align-items:center;
-  padding:0 25px;
-  z-index:1000;
-  box-shadow:0 10px 30px rgba(0,0,0,.25);
-}
-
-.menu-btn{
-  font-size:22px;
-  cursor:pointer;
-  margin-right:15px;
-}
-
-/* SIDEBAR FIX */
-.sidebar{
-position:fixed;
-top:70px;
-left:-260px;
-width:260px;
-height:calc(100% - 70px);
+position:fixed;top:0;left:0;width:100%;height:70px;
 background:linear-gradient(135deg,#2563eb,#3b82f6);
-padding-top:20px;
-transition:.3s;
-z-index:1000;
+color:white;display:flex;align-items:center;padding:0 25px;
+z-index:1000;box-shadow:0 10px 30px rgba(0,0,0,.25);
+}
+
+.menu-btn{font-size:22px;cursor:pointer;margin-right:15px}
+
+/* SIDEBAR */
+.sidebar{
+position:fixed;top:70px;left:-260px;width:260px;height:calc(100% - 70px);
+background:linear-gradient(135deg,#2563eb,#3b82f6);
+padding-top:20px;transition:.3s;z-index:1000;
 }
 .sidebar.show{left:0}
 
-.sidebar a{
-display:flex;gap:12px;padding:18px 25px;
-color:#cbd5e1;text-decoration:none;
-}
+.sidebar a{display:flex;gap:12px;padding:18px 25px;color:#cbd5e1;text-decoration:none}
 .sidebar a:hover{background:rgba(255,255,255,.1);color:white}
 
-
 /* OVERLAY */
-.overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.4);
-  opacity:0;
-  pointer-events:none;
-  transition:.3s;
-  z-index:998;
-}
-.overlay.show{
-  opacity:1;
-  pointer-events:auto;
-}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);
+opacity:0;pointer-events:none;transition:.3s;z-index:998;}
+.overlay.show{opacity:1;pointer-events:auto}
 
 /* MAIN */
-.main{
-  padding:100px 30px 30px 30px;
-}
-
-
-
-
+.main{padding:100px 30px 30px}
 
 /* CARD */
 .card{
-  background:white;
-  padding:25px;
-  border-radius:18px;
-  box-shadow:0 15px 35px rgba(0,0,0,.08);
-  margin-bottom:20px;
+background:white;padding:25px;border-radius:18px;
+box-shadow:0 15px 35px rgba(0,0,0,.08);
+margin-bottom:20px;overflow:hidden;
 }
 
 h3{margin-bottom:10px}
 
 /* INPUT */
 input{
-  width:100%;
-  padding:12px;
-  margin-bottom:12px;
-  border-radius:10px;
-  border:1px solid #e2e8f0;
+width:100%;padding:12px;margin-bottom:12px;
+border-radius:10px;border:1px solid #e2e8f0;
 }
 
 /* BUTTON */
 button{
-  width:100%;
-  padding:14px;
-  border:none;
-  border-radius:12px;
-  background:#2563eb;
-  color:white;
-  font-weight:600;
-  cursor:pointer;
+width:100%;padding:14px;border:none;border-radius:12px;
+background:#2563eb;color:white;font-weight:600;cursor:pointer;
+transition:.2s;
 }
 button:hover{background:#1d4ed8}
 
-.table{
-margin-top:35px;background:white;border-radius:18px;
-padding:25px;box-shadow:0 15px 35px rgba(0,0,0,.08);
-height:300px;overflow-y:auto;
+button.loading{
+background:#94a3b8;
+cursor:not-allowed;
 }
-table{width:100%;border-collapse:collapse}
+
+/* ===== FIX RIWAYAT MOBILE ===== */
+.riwayat-wrap{
+width:100%;
+overflow-x:auto;
+}
+
+table{
+width:100%;
+min-width:450px;
+border-collapse:collapse;
+}
 th,td{padding:10px;border-bottom:2px solid #e2e8f0}
 th{background:#f8fafc;text-align:left;position:sticky;top:0}
 
 .hidden{display:none}
 
-.loading{
-  color:#94a3b8;
-  font-style:italic;
-}
-
+.loading{color:#94a3b8;font-style:italic}
 </style>
 </head>
 
 <body>
 
-<!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
 <a href="dashboard.html">🏠 Dashboard</a>
 <a href="transaksi.html">💸 Transaksi</a>
@@ -145,14 +99,12 @@ th{background:#f8fafc;text-align:left;position:sticky;top:0}
 
 <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
 
-<!-- TOPBAR -->
 <div class="topbar">
 <div class="menu-btn" onclick="toggleMenu()">☰</div>
-<div>💼 Bekal Sauami</div>
+<div>💼 Bekal Suami</div>
 </div>
 
 <div class="main">
-
 
 <!-- SALDO -->
 <div class="card">
@@ -167,7 +119,7 @@ th{background:#f8fafc;text-align:left;position:sticky;top:0}
 <h3>Transfer Bekal ke Suami</h3>
 <input id="bekalMasuk" placeholder="Nominal Bekal">
 <input id="ketMasuk" placeholder="Keterangan">
-<button onclick="tambahBekal()">Transfer Bekal</button>
+<button id="btnBekal" onclick="tambahBekal()">Transfer Bekal</button>
 </div>
 
 <!-- FORM SUAMI -->
@@ -175,15 +127,19 @@ th{background:#f8fafc;text-align:left;position:sticky;top:0}
 <h3>Tambah Pengeluaran Bekal</h3>
 <input id="nominal" placeholder="Nominal">
 <input id="ket" placeholder="Keterangan">
-<button onclick="simpan()">Simpan Pengeluaran</button>
+<button id="btnKeluar" onclick="simpan()">Simpan Pengeluaran</button>
 </div>
 
 <!-- RIWAYAT -->
 <div class="card">
 <h3>Riwayat Bekal</h3>
+
+<div class="riwayat-wrap">
 <table id="tbl">
-<tr><th>Tanggal</th><th>Jenis</th><th>Nominal</th><th>Ket</th></tr>
+<tr><th>Tanggal</th><th>Jenis</th><th>Nominal</th><th>Keterangan</th></tr>
 </table>
+</div>
+
 </div>
 
 </div>
@@ -192,9 +148,6 @@ th{background:#f8fafc;text-align:left;position:sticky;top:0}
 const url="https://script.google.com/macros/s/AKfycbykSlA2XD2AsovwsQBfqvbmMnSLUchFsyjxr6QdCoKstySkaEC7E9iw-Rab_u3ih8T7/exec";
 
 /* MENU */
-const sidebar=document.getElementById("sidebar");
-const overlay=document.getElementById("overlay");
-
 function toggleMenu(){
 sidebar.classList.toggle("show");
 overlay.classList.toggle("show");
@@ -202,30 +155,30 @@ overlay.classList.toggle("show");
 
 const user=localStorage.getItem("user");
 const role=localStorage.getItem("role");
-
 if(!user) location="index.html";
 
-/* ROLE VIEW */
-if(role==="admin"){
-formIstri.classList.remove("hidden");
-}else{
-formSuami.classList.remove("hidden");
-}
+/* ROLE */
+if(role==="admin") formIstri.classList.remove("hidden");
+else formSuami.classList.remove("hidden");
 
 /* LOAD DATA */
 load();
 
 function load(){
 
-fetch(`${url}?action=getSaldoBekal&user=${user}`)
+fetch(`${url}?action=getSaldoBekal`)
 .then(r=>r.json())
 .then(d=>{
+saldo.classList.remove("loading");
+masuk.classList.remove("loading");
+keluar.classList.remove("loading");
+
 saldo.innerText="Rp "+d.saldo.toLocaleString();
 masuk.innerText="Rp "+d.totalBekal.toLocaleString();
 keluar.innerText="Rp "+d.totalKeluar.toLocaleString();
 });
 
-fetch(`${url}?action=getRiwayatBekal&user=${user}`)
+fetch(`${url}?action=getRiwayatBekal`)
 .then(r=>r.json())
 .then(rows=>{
 rows.reverse().forEach(r=>{
@@ -244,11 +197,15 @@ tbl.innerHTML+=`
 
 /* SUAMI INPUT */
 function simpan(){
+const btn=document.getElementById("btnKeluar");
+btn.classList.add("loading");
+btn.innerText="Menyimpan...";
+btn.disabled=true;
+
 fetch(url,{
 method:"POST",
 body:JSON.stringify({
 action:"addPengeluaranBekal",
-user:user,
 nominal:nominal.value,
 keterangan:ket.value
 })
@@ -257,29 +214,20 @@ keterangan:ket.value
 
 /* ISTRI TRANSFER */
 function tambahBekal(){
+const btn=document.getElementById("btnBekal");
+btn.classList.add("loading");
+btn.innerText="Mengirim...";
+btn.disabled=true;
+
 fetch(url,{
 method:"POST",
 body:JSON.stringify({
 action:"addBekal",
-user:user,
 nominal:bekalMasuk.value,
 keterangan:ketMasuk.value
 })
 }).then(()=>location.reload());
 }
-
-fetch(`${url}?action=getSaldoBekal&user=${user}`)
-.then(r=>r.json())
-.then(d=>{
-  saldo.classList.remove("loading");
-  masuk.classList.remove("loading");
-  keluar.classList.remove("loading");
-
-  saldo.innerText="Rp "+d.saldo.toLocaleString();
-  masuk.innerText="Rp "+d.totalBekal.toLocaleString();
-  keluar.innerText="Rp "+d.totalKeluar.toLocaleString();
-});
-
 </script>
 
 </body>

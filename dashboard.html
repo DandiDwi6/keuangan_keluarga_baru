@@ -82,48 +82,20 @@ border-radius:50%;border:none;
 background:linear-gradient(135deg,#2563eb,#3b82f6);
 color:white;font-size:34px;cursor:pointer;
 }
+
 /* ALERT SALDO TIPIS */
-.blink {
-  color: #dc2626 !important;
-  animation: blinkAnim 1s infinite;
-}
-/* PROGRESS SALDO */
-.progressBar{
-  width:100%;
-  height:6px;
-  background:#e5e7eb;
-  border-radius:10px;
-  margin-top:10px;
-  overflow:hidden;
-}
+.blink { color:#dc2626!important; animation:blinkAnim 1s infinite; }
+@keyframes blinkAnim{0%{opacity:1}50%{opacity:.2}100%{opacity:1}}
 
-#barBekal{
-  height:100%;
-  width:100%;
-  background:#16a34a;
-  transition:0.4s;
-}
-
-@keyframes blinkAnim {
-  0% { opacity: 1; }
-  50% { opacity: 0.2; }
-  100% { opacity: 1; }
-}
+.progressBar{width:100%;height:6px;background:#e5e7eb;border-radius:10px;margin-top:10px;overflow:hidden}
+#barBekal{height:100%;width:100%;background:#16a34a;transition:.4s}
 
 /* LOADER */
-.loader{
-position:fixed;inset:0;background:white;
-display:flex;justify-content:center;align-items:center;
-z-index:9999;
-}
-.spinner{
-width:60px;height:60px;border:6px solid #e5e7eb;
-border-top:6px solid #2563eb;border-radius:50%;
-animation:spin 1s linear infinite;
-}
+.loader{position:fixed;inset:0;background:white;display:flex;justify-content:center;align-items:center;z-index:9999}
+.spinner{width:60px;height:60px;border:6px solid #e5e7eb;border-top:6px solid #2563eb;border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-
+.eye{cursor:pointer;font-size:18px;margin-left:8px}
 </style>
 </head>
 
@@ -131,7 +103,6 @@ animation:spin 1s linear infinite;
 
 <div class="loader" id="loader"><div class="spinner"></div></div>
 
-<!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
 <a href="dashboard.html">🏠 Dashboard</a>
 <a href="transaksi.html" id="menuTransaksi">💸 Transaksi</a>
@@ -140,13 +111,11 @@ animation:spin 1s linear infinite;
 
 <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
 
-<!-- TOPBAR -->
 <div class="topbar">
 <div class="menu-btn" onclick="toggleMenu()">☰</div>
 <div>💳 Dashboard</div>
 </div>
 
-<!-- MAIN -->
 <div class="main">
 
 <div class="header">
@@ -158,32 +127,37 @@ animation:spin 1s linear infinite;
 </div>
 
 <div class="cards">
+
 <div class="card">
-<div class="title">Saldo Total</div>
-<div class="value" id="saldo">Rp 0</div>
+<div class="title">
+Saldo Total <span class="eye" id="eyeBtn">👁️</span>
+</div>
+<div class="value" id="saldo">Rp ****</div>
 </div>
 
 <div class="card">
 <div class="title">Pemasukan</div>
-<div class="value green" id="income">Rp 0</div>
+<div class="value green" id="income">Rp ****</div>
 </div>
 
 <div class="card">
 <div class="title">Pengeluaran</div>
-<div class="value red" id="expense">Rp 0</div>
+<div class="value red" id="expense">Rp ****</div>
 </div>
 
 <div class="card">
 <div class="title">Saldo Bekal</div>
-<div class="value" id="saldoBekalEl">Rp 0</div>
+<div class="value" id="saldoBekalEl">Rp ****</div>
+
 <div id="warningBekal" style="display:none;font-size:13px;margin-top:6px;color:#dc2626;font-weight:600;">
 ⚠️ Saldo bekal hampir habis
 </div>
 
 <div class="progressBar">
-  <div id="barBekal"></div>
+<div id="barBekal"></div>
 </div>
 </div>
+
 </div>
 
 <div class="table">
@@ -203,10 +177,7 @@ const url="https://script.google.com/macros/s/AKfycbykSlA2XD2AsovwsQBfqvbmMnSLUc
 /* MENU */
 const sidebar=document.getElementById("sidebar");
 const overlay=document.getElementById("overlay");
-function toggleMenu(){
-sidebar.classList.toggle("show");
-overlay.classList.toggle("show");
-}
+function toggleMenu(){sidebar.classList.toggle("show");overlay.classList.toggle("show");}
 
 /* DATE */
 today.innerText=new Date().toLocaleDateString("id-ID",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
@@ -217,113 +188,82 @@ const role=localStorage.getItem("role");
 if(!user)location="index.html";
 welcome.innerText="Halo, "+user+" 👋";
 
-if(role==="user"){
-menuTransaksi.style.display="none";
-btnTambah.style.display="none";
-}
-
+if(role==="user"){menuTransaksi.style.display="none";btnTambah.style.display="none";}
 function logout(){localStorage.clear();location="index.html"}
 
-/* ================= LOAD SALDO UTAMA ================= */
+/* ===== HIDE SALDO SYSTEM ===== */
+let hideSaldo=true;
+let _saldoTotal=0,_incomeTotal=0,_expenseTotal=0,_saldoBekal=0;
+
+function rp(n){return "Rp "+Number(n).toLocaleString("id-ID");}
+
+function renderSaldo(){
+if(hideSaldo){
+saldo.innerText="Rp ****";
+income.innerText="Rp ****";
+expense.innerText="Rp ****";
+saldoBekalEl.innerText="Rp ****";
+eyeBtn.innerText="🙈";
+}else{
+saldo.innerText=rp(_saldoTotal);
+income.innerText=rp(_incomeTotal);
+expense.innerText=rp(_expenseTotal);
+saldoBekalEl.innerText=rp(_saldoBekal);
+eyeBtn.innerText="👁️";
+}
+}
+
+eyeBtn.onclick=()=>{hideSaldo=!hideSaldo;renderSaldo();}
+
+/* LOAD SALDO UTAMA */
 fetch(url,{method:"POST",body:JSON.stringify({action:"getData",sheet:"TRANSACTIONS"})})
 .then(r=>r.json())
 .then(data=>{
-
-let saldoTotal=0,incomeTotal=0,expenseTotal=0;
-
 for(let i=1;i<data.length;i++){
 const row=data[i];
 const jenis=row[2];
 const nominal=Number(row[5])||0;
-
-if(jenis==="income"){incomeTotal+=nominal;saldoTotal+=nominal}
-if(jenis==="expense"){expenseTotal+=nominal;saldoTotal-=nominal}
-
+if(jenis==="income"){_incomeTotal+=nominal;_saldoTotal+=nominal}
+if(jenis==="expense"){_expenseTotal+=nominal;_saldoTotal-=nominal}
 if(i>data.length-6){
-tbl.innerHTML+=`<tr>
-<td>${row[1]}</td>
-<td>${jenis}</td>
-<td>Rp ${nominal.toLocaleString()}</td>
-</tr>`;
+tbl.innerHTML+=`<tr><td>${row[1]}</td><td>${jenis}</td><td>Rp ${nominal.toLocaleString()}</td></tr>`;
 }
 }
-
-saldo.innerText="Rp "+saldoTotal.toLocaleString();
-income.innerText="Rp "+incomeTotal.toLocaleString();
-expense.innerText="Rp "+expenseTotal.toLocaleString();
-
+renderSaldo();
 });
 
-/* ================= SALDO BEKAL REAL ================= */
+/* SALDO BEKAL */
+let totalBekal=0,totalKeluarBekal=0;
 
-let totalBekal = 0;
-let totalKeluarBekal = 0;
-
-/* AMBIL DATA BEKAL MASUK */
 fetch(url,{method:"POST",body:JSON.stringify({action:"getData",sheet:"BEKAL"})})
 .then(r=>r.json())
 .then(data=>{
-
-for(let i=1;i<data.length;i++){
-const row=data[i];
-const nominal=Number(row[2])||0;
-totalBekal += nominal;
-}
-
-/* AMBIL DATA PENGELUARAN BEKAL */
+for(let i=1;i<data.length;i++){totalBekal+=Number(data[i][2])||0;}
 return fetch(url,{method:"POST",body:JSON.stringify({action:"getData",sheet:"PENGELUARAN_BEKAL"})});
 })
 .then(r=>r.json())
 .then(data=>{
+for(let i=1;i<data.length;i++){totalKeluarBekal+=Number(data[i][2])||0;}
+_saldoBekal=totalBekal-totalKeluarBekal;
+renderSaldo();
 
-for(let i=1;i<data.length;i++){
-const row=data[i];
-const nominal=Number(row[2])||0;
-totalKeluarBekal += nominal;
-}
+const persen=Math.max((_saldoBekal/totalBekal)*100,5);
+barBekal.style.width=persen+"%";
 
-const saldoBekal = totalBekal - totalKeluarBekal;
-saldoBekalEl.innerText="Rp "+saldoBekal.toLocaleString();
+if(persen>50)barBekal.style.background="#16a34a";
+else if(persen>25)barBekal.style.background="#f59e0b";
+else barBekal.style.background="#dc2626";
 
-const batasTipis = 50000;
-const warning = document.getElementById("warningBekal");
-const bar = document.getElementById("barBekal");
-
-/* HITUNG PERSENTASE SALDO */
-const persen = Math.max((saldoBekal / totalBekal) * 100, 5);
-bar.style.width = persen + "%";
-
-/* WARNA PROGRESS */
-if(persen > 50) bar.style.background="#16a34a";
-else if(persen > 25) bar.style.background="#f59e0b";
-else bar.style.background="#dc2626";
-
-/* ALERT SALDO TIPIS */
-if(saldoBekal <= batasTipis){
-
-  saldoBekalEl.classList.add("blink");
-  warning.style.display="block";
-
-  /* POPUP SEKALI SAJA */
-  if(!localStorage.getItem("alertBekalShown")){
-    setTimeout(()=>{
-      alert("⚠️ Saldo bekal hampir habis!");
-    },500);
-    localStorage.setItem("alertBekalShown","yes");
-  }
-
+if(_saldoBekal<=50000){
+saldoBekalEl.classList.add("blink");
+warningBekal.style.display="block";
 }else{
-  saldoBekalEl.classList.remove("blink");
-  warning.style.display="none";
-  localStorage.removeItem("alertBekalShown");
+saldoBekalEl.classList.remove("blink");
+warningBekal.style.display="none";
 }
-
-
 
 loader.style.display="none";
-
 });
-
 </script>
 
 </body>
