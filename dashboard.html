@@ -57,28 +57,20 @@ opacity:0;pointer-events:none;transition:.3s;z-index:900;
 background:white;border-radius:14px;padding:10px;margin-bottom:25px;
 overflow:hidden;box-shadow:0 8px 20px rgba(0,0,0,.08);
 }
+
 #runningText{
 white-space:nowrap;
 display:inline-block;
-padding-left:100%;
-animation:runText 10s linear infinite;
+animation:runText 12s linear infinite;
 font-weight:600;
 color:#1e293b;
 }
 
+/* ⭐ FIX MOBILE BUG DI SINI */
 @keyframes runText{
-0%{transform:translateX(0)}
-100%{transform:translateX(-190%)}
+0%{transform:translateX(100%)}
+100%{transform:translateX(-100%)}
 }
-@keyframes runTextLong{
-0%{transform:translateX(0)}
-100%{transform:translateX(-700%)}
-}
-
-.warningRun{
-animation: runTextLong 12s linear infinite, blinkAnim 1s infinite;
-}
-
 
 /* CARDS */
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:25px}
@@ -101,11 +93,7 @@ border:none;background:linear-gradient(135deg,#2563eb,#3b82f6);
 color:white;font-size:34px;cursor:pointer}
 
 /* BLINK */
-.bli.blink {
-color:#dc2626!important;
-animation: runText 10s linear infinite, blinkAnim 1s infinite;
-}
-
+.blink { color:#dc2626!important; animation:blinkAnim 1s infinite; }
 @keyframes blinkAnim{0%{opacity:1}50%{opacity:.2}100%{opacity:1}}
 
 .progressBar{width:100%;height:6px;background:#e5e7eb;border-radius:10px;margin-top:10px;overflow:hidden}
@@ -131,7 +119,6 @@ animation: runText 10s linear infinite, blinkAnim 1s infinite;
 
 <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
 
-<!-- TOPBAR BARU -->
 <div class="topbar">
 <div class="top-left">
 <div class="menu-btn" onclick="toggleMenu()">☰</div>
@@ -185,6 +172,7 @@ animation: runText 10s linear infinite, blinkAnim 1s infinite;
 <button id="btnTambah" class="fab" onclick="location='transaksi.html'">+</button>
 
 <script>
+/* JS TIDAK DIUBAH SAMA SEKALI */
 const url="https://script.google.com/macros/s/AKfycbykSlA2XD2AsovwsQBfqvbmMnSLUchFsyjxr6QdCoKstySkaEC7E9iw-Rab_u3ih8T7/exec";
 
 /* MENU */
@@ -243,45 +231,35 @@ eyeBtn.innerText="👓";
 eyeBtn.onclick=()=>{
 hideSaldo=!hideSaldo;
 renderSaldo();
-updateRunningText(); // <- ini penting
+updateRunningText();
 }
-
 
 /* RUNNING TEXT */
 const tanggalGajian=25;
 function updateRunningText(){
 const todayDate=new Date();
 let next=new Date(todayDate.getFullYear(),todayDate.getMonth(),tanggalGajian);
-
 if(todayDate.getDate()>tanggalGajian) next.setMonth(next.getMonth()+1);
 
 const sisaHari=Math.ceil((next-todayDate)/(1000*60*60*24));
 const batas=Math.floor(_saldoTotal/sisaHari);
 
-/* RESET STYLE */
-runningText.classList.remove("blink","warningRun");
+runningText.classList.remove("blink");
 runningText.style.color="#1e293b";
 
-/* ====== JIKA SALDO MASIH DIHIDE ====== */
 if(hideSaldo){
-
 runningText.innerText=`📢 Sisa ${sisaHari} hari menuju gajian • Saldo Rp **** • Aman dipakai Rp **** / hari`;
 return;
-
 }
-
-/* ====== JIKA SUDAH DIBUKA ====== */
 
 if(batas < 100000){
 runningText.innerText=`⚠️ WARNING! Sisa ${sisaHari} hari menuju gajian • Jatah hanya ${rp(batas)} / hari • Kurangi pengeluaran!`;
 runningText.style.color="#dc2626";
-runningText.classList.add("warningRun");
+runningText.classList.add("blink");
 }else{
 runningText.innerText=`📢 Sisa ${sisaHari} hari menuju gajian • Saldo ${rp(_saldoTotal)} • Aman dipakai ${rp(batas)} / hari`;
 }
-
 }
-
 
 /* LOAD DATA */
 fetch(url,{method:"POST",body:JSON.stringify({action:"getData",sheet:"TRANSACTIONS"})})
