@@ -70,6 +70,14 @@ color:#1e293b;
 0%{transform:translateX(0)}
 100%{transform:translateX(-190%)}
 }
+@keyframes runTextLong{
+0%{transform:translateX(0)}
+100%{transform:translateX(-350%)}
+}
+
+.warningRun{
+animation: runTextLong 12s linear infinite, blinkAnim 1s infinite;
+}
 
 
 /* CARDS */
@@ -251,7 +259,7 @@ const sisaHari=Math.ceil((next-todayDate)/(1000*60*60*24));
 const batas=Math.floor(_saldoTotal/sisaHari);
 
 /* RESET STYLE */
-runningText.classList.remove("blink");
+runningText.classList.remove("blink","warningRun");
 runningText.style.color="#1e293b";
 
 /* ====== JIKA SALDO MASIH DIHIDE ====== */
@@ -267,7 +275,7 @@ return;
 if(batas < 100000){
 runningText.innerText=`⚠️ WARNING! Sisa ${sisaHari} hari menuju gajian • Jatah hanya ${rp(batas)} / hari • Kurangi pengeluaran!`;
 runningText.style.color="#dc2626";
-runningText.classList.add("blink");
+runningText.classList.add("warningRun");
 }else{
 runningText.innerText=`📢 Sisa ${sisaHari} hari menuju gajian • Saldo ${rp(_saldoTotal)} • Aman dipakai ${rp(batas)} / hari`;
 }
