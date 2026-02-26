@@ -66,7 +66,6 @@ font-weight:600;
 color:#1e293b;
 }
 
-/* ⭐ FIX MOBILE BUG DI SINI */
 @keyframes runText{
 0%{transform:translateX(100%)}
 100%{transform:translateX(-250%)}
@@ -86,6 +85,10 @@ box-shadow:0 15px 35px rgba(0,0,0,.08);height:300px;overflow-y:auto}
 table{width:100%;border-collapse:collapse}
 th,td{padding:14px;border-bottom:1px solid #e2e8f0}
 th{background:#f8fafc;text-align:left;position:sticky;top:0}
+
+/* warna jenis */
+.incomeRow{color:#16a34a;font-weight:600}
+.expenseRow{color:#dc2626;font-weight:600}
 
 /* FAB */
 .fab{position:fixed;right:30px;bottom:30px;width:50px;height:50px;border-radius:50%;
@@ -163,7 +166,13 @@ color:white;font-size:34px;cursor:pointer}
 <div class="table">
 <h3>Transaksi Terbaru</h3>
 <table id="tbl">
-<tr><th>Tanggal</th><th>Jenis</th><th>Nominal</th></tr>
+<tr>
+<th>Tanggal</th>
+<th>Jenis</th>
+<th>Kategori</th>
+<th>Nominal</th>
+<th>Catatan</th>
+</tr>
 </table>
 </div>
 
@@ -172,18 +181,14 @@ color:white;font-size:34px;cursor:pointer}
 <button id="btnTambah" class="fab" onclick="location='transaksi.html'">+</button>
 
 <script>
-/* JS TIDAK DIUBAH SAMA SEKALI */
 const url="https://script.google.com/macros/s/AKfycbykSlA2XD2AsovwsQBfqvbmMnSLUchFsyjxr6QdCoKstySkaEC7E9iw-Rab_u3ih8T7/exec";
 
-/* MENU */
 const sidebar=document.getElementById("sidebar");
 const overlay=document.getElementById("overlay");
 function toggleMenu(){sidebar.classList.toggle("show");overlay.classList.toggle("show");}
 
-/* DATE */
 today.innerText=new Date().toLocaleDateString("id-ID",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
 
-/* AUTH */
 const user=localStorage.getItem("user");
 const role=localStorage.getItem("role");
 if(!user)location="index.html";
@@ -191,14 +196,10 @@ welcome.innerText="Halo, "+user+" 👋";
 if(role==="user"){menuTransaksi.style.display="none";btnTambah.style.display="none";}
 function logout(){localStorage.clear();location="index.html"}
 
-/* FORMAT */
 function rp(n){return "Rp "+Number(n).toLocaleString("id-ID");}
 
-/* ANIMASI COUNT UP */
 function animate(el,end){
-let start=0;
-let duration=800;
-let startTime=null;
+let start=0;let duration=800;let startTime=null;
 function step(t){
 if(!startTime)startTime=t;
 let progress=Math.min((t-startTime)/duration,1);
@@ -209,7 +210,6 @@ if(progress<1)requestAnimationFrame(step);
 requestAnimationFrame(step);
 }
 
-/* HIDE SALDO */
 let hideSaldo=true;
 let _saldoTotal=0,_incomeTotal=0,_expenseTotal=0,_saldoBekal=0;
 
@@ -228,13 +228,8 @@ animate(saldoBekalEl,_saldoBekal);
 eyeBtn.innerText="👓";
 }
 }
-eyeBtn.onclick=()=>{
-hideSaldo=!hideSaldo;
-renderSaldo();
-updateRunningText();
-}
+eyeBtn.onclick=()=>{hideSaldo=!hideSaldo;renderSaldo();updateRunningText();}
 
-/* RUNNING TEXT */
 const tanggalGajian=25;
 function updateRunningText(){
 const todayDate=new Date();
@@ -261,7 +256,7 @@ runningText.innerText=`📢 Sisa ${sisaHari} hari menuju gajian • Saldo ${rp(_
 }
 }
 
-/* LOAD DATA */
+/* LOAD DATA (REVISI BAGIAN TABLE SAJA) */
 fetch(url,{method:"POST",body:JSON.stringify({action:"getData",sheet:"TRANSACTIONS"})})
 .then(r=>r.json())
 .then(data=>{
@@ -269,17 +264,35 @@ for(let i=1;i<data.length;i++){
 const row=data[i];
 const jenis=row[2];
 const nominal=Number(row[5])||0;
+
 if(jenis==="income"){_incomeTotal+=nominal;_saldoTotal+=nominal}
 if(jenis==="expense"){_expenseTotal+=nominal;_saldoTotal-=nominal}
+
 if(i>data.length-6){
-tbl.innerHTML+=`<tr><td>${row[1]}</td><td>${jenis}</td><td>${rp(nominal)}</td></tr>`;
+
+const kategori=row[4]||"-";
+const catatan=row[6]||"-";
+
+const tgl=new Date(row[1]);
+const tanggal=tgl.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"});
+
+const warna=jenis==="income"?"incomeRow":"expenseRow";
+
+tbl.innerHTML+=`
+<tr>
+<td>${tanggal}</td>
+<td class="${warna}">${jenis}</td>
+<td>${kategori}</td>
+<td class="${warna}">${rp(nominal)}</td>
+<td>${catatan}</td>
+</tr>`;
 }
 }
 renderSaldo();
 updateRunningText();
 });
 
-/* BEKAL */
+/* BEKAL (TIDAK DIUBAH) */
 let totalBekal=0,totalKeluarBekal=0;
 fetch(url,{method:"POST",body:JSON.stringify({action:"getData",sheet:"BEKAL"})})
 .then(r=>r.json())
