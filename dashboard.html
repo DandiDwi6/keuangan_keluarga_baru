@@ -7,6 +7,8 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Poppins}
 body{background:linear-gradient(135deg,#eef2ff,#f8fafc);}
@@ -22,9 +24,7 @@ padding:0 25px;z-index:1000;box-shadow:0 10px 30px rgba(0,0,0,.25);
 .top-left{display:flex;align-items:center;gap:15px}
 .menu-btn{font-size:22px;cursor:pointer}
 
-.user-info{
-display:flex;flex-direction:column;font-size:14px;
-}
+.user-info{display:flex;flex-direction:column;font-size:14px;}
 
 .logout{
 background:rgba(255,255,255,.2);
@@ -164,7 +164,25 @@ color:white;font-size:34px;cursor:pointer}
 </div>
 
 <div class="table">
-<h3>Transaksi Terbaru</h3>
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+<h3 style="font-size:16px">Transaksi Bulan Ini</h3>
+
+<div style="display:flex;gap:6px;align-items:center">
+
+<select id="bulanPdf"
+style="padding:4px 6px;font-size:12px;border-radius:6px;border:1px solid #ddd;height:28px">
+</select>
+
+<button onclick="downloadPDF()"
+style="background:#2563eb;color:white;border:none;
+padding:4px 10px;font-size:12px;border-radius:6px;height:28px;cursor:pointer">
+PDF
+</button>
+
+</div>
+</div>
+
 <table id="tbl">
 <tr>
 <th>Tanggal</th>
@@ -174,6 +192,7 @@ color:white;font-size:34px;cursor:pointer}
 <th>Catatan</th>
 </tr>
 </table>
+
 </div>
 
 </div>
@@ -212,6 +231,8 @@ requestAnimationFrame(step);
 
 let hideSaldo=true;
 let _saldoTotal=0,_incomeTotal=0,_expenseTotal=0,_saldoBekal=0;
+let dataBulanIni=[];
+let semuaData=[];
 
 function renderSaldo(){
 if(hideSaldo){
@@ -235,18 +256,14 @@ function updateRunningText(){
 const todayDate=new Date();
 let next=new Date(todayDate.getFullYear(),todayDate.getMonth(),tanggalGajian);
 if(todayDate.getDate()>tanggalGajian) next.setMonth(next.getMonth()+1);
-
 const sisaHari=Math.ceil((next-todayDate)/(1000*60*60*24));
 const batas=Math.floor(_saldoTotal/sisaHari);
-
 runningText.classList.remove("blink");
 runningText.style.color="#1e293b";
-
 if(hideSaldo){
 runningText.innerText=`📢 Sisa ${sisaHari} hari menuju gajian • Saldo Rp **** • Aman dipakai Rp **** / hari`;
 return;
 }
-
 if(batas < 100000){
 runningText.innerText=`⚠️ WARNING! Sisa ${sisaHari} hari menuju gajian • Jatah hanya ${rp(batas)} / hari • Kurangi pengeluaran!`;
 runningText.style.color="#dc2626";
@@ -256,26 +273,50 @@ runningText.innerText=`📢 Sisa ${sisaHari} hari menuju gajian • Saldo ${rp(_
 }
 }
 
-/* LOAD DATA (REVISI BAGIAN TABLE SAJA) */
+/* LOAD DATA */
 fetch(url,{method:"POST",body:JSON.stringify({action:"getData",sheet:"TRANSACTIONS"})})
 .then(r=>r.json())
 .then(data=>{
+const now=new Date();
+const bulanNow=now.getMonth();
+const tahunNow=now.getFullYear();
+
+const bulanSet=new Set();
+
 for(let i=1;i<data.length;i++){
 const row=data[i];
 const jenis=row[2];
 const nominal=Number(row[5])||0;
+const tgl=new Date(row[1]);
+
+semuaData.push(row);
+
+bulanSet.add(tgl.getMonth()+"-"+tgl.getFullYear());
 
 if(jenis==="income"){_incomeTotal+=nominal;_saldoTotal+=nominal}
 if(jenis==="expense"){_expenseTotal+=nominal;_saldoTotal-=nominal}
 
-if(i>data.length-6){
+if(tgl.getMonth()===bulanNow && tgl.getFullYear()===tahunNow){
+dataBulanIni.push(row);
+}
+}
 
+/* isi dropdown bulan */
+bulanSet.forEach(b=>{
+const [m,y]=b.split("-");
+bulanPdf.innerHTML+=`<option value="${b}">
+${new Date(y,m).toLocaleDateString("id-ID",{month:"long",year:"numeric"})}
+</option>`;
+});
+
+
+dataBulanIni.reverse().slice(0,5).forEach(row=>{
+const jenis=row[2];
+const nominal=Number(row[5])||0;
 const kategori=row[4]||"-";
 const catatan=row[6]||"-";
-
 const tgl=new Date(row[1]);
 const tanggal=tgl.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"});
-
 const warna=jenis==="income"?"incomeRow":"expenseRow";
 
 tbl.innerHTML+=`
@@ -286,13 +327,59 @@ tbl.innerHTML+=`
 <td class="${warna}">${rp(nominal)}</td>
 <td>${catatan}</td>
 </tr>`;
-}
-}
+});
+
 renderSaldo();
 updateRunningText();
 });
 
-/* BEKAL (TIDAK DIUBAH) */
+/* DOWNLOAD PDF */
+function downloadPDF(){
+
+const { jsPDF } = window.jspdf;
+const doc=new jsPDF();
+
+const val=bulanPdf.value.split("-");
+const m=parseInt(val[0]);
+const y=parseInt(val[1]);
+
+doc.setFontSize(16);
+doc.text("Laporan Keuangan",20,20);
+
+let yPos=35;
+let totalIn=0,totalOut=0;
+
+semuaData.forEach(row=>{
+
+const tgl=new Date(row[1]);
+
+if(tgl.getMonth()==m && tgl.getFullYear()==y){
+
+const nominal=Number(row[5])||0;
+
+doc.text(
+`${tgl.toLocaleDateString("id-ID")} | ${row[2]} | ${row[4]||"-"} | ${rp(nominal)}`,
+20,yPos
+);
+
+if(row[2]=="income") totalIn+=nominal;
+if(row[2]=="expense") totalOut+=nominal;
+
+yPos+=8;
+if(yPos>280){doc.addPage();yPos=20;}
+}
+});
+
+/* TOTAL */
+yPos+=10;
+doc.setFontSize(12);
+doc.text("Total Pemasukan: "+rp(totalIn),20,yPos);
+doc.text("Total Pengeluaran: "+rp(totalOut),20,yPos+10);
+
+doc.save(`Laporan_${m+1}_${y}.pdf`);
+}
+
+/* BEKAL */
 let totalBekal=0,totalKeluarBekal=0;
 fetch(url,{method:"POST",body:JSON.stringify({action:"getData",sheet:"BEKAL"})})
 .then(r=>r.json())
@@ -305,7 +392,6 @@ return fetch(url,{method:"POST",body:JSON.stringify({action:"getData",sheet:"PEN
 for(let i=1;i<data.length;i++){totalKeluarBekal+=Number(data[i][2])||0;}
 _saldoBekal=totalBekal-totalKeluarBekal;
 renderSaldo();
-
 const persen=Math.max((_saldoBekal/totalBekal)*100,5);
 barBekal.style.width=persen+"%";
 if(_saldoBekal<=50000){saldoBekalEl.classList.add("blink");warningBekal.style.display="block";}
